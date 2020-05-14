@@ -1,6 +1,21 @@
+import random
+
 class User:
     def __init__(self, name):
         self.name = name
+
+class Queue():
+    def __init__(self):
+        self.queue = []
+    def enqueue(self, value):
+        self.queue.append(value)
+    def dequeue(self):
+        if self.size() > 0:
+            return self.queue.pop(0)
+        else:
+            return None
+    def size(self):
+        return len(self.queue)
 
 class SocialGraph:
     def __init__(self):
@@ -44,9 +59,47 @@ class SocialGraph:
         self.friendships = {}
         # !!!! IMPLEMENT ME
 
-        # Add users
+        # Add user
+
+        #create friendship
+        for i in range(0, num_users):
+            self.add_user(f"User {i +1 }")
+        
+        possible_friendships = []
+
+        #avoid duplication
+        for user_id in self.users:
+            for friend_id in range(user_id+1, self.last_id+1):
+                possible_friendships.append((user_id, friend_id))
 
         # Create friendships
+        #generate friendship combinations
+        #avoid dupes by making sure first number is smaller than the second
+        #shuffle all possible friendships
+        random.shuffle(possible_friendships)
+
+        #create for first X pairs x is total
+        #friendship a -> b and b<- n
+        for i in range(num_users * avg_friendships //2):
+            friendship = possible_friendships[i]
+            self.add_friendship(friendship[0], friendship[1])
+
+    def bfs(self, starting_vertex, destination_vertex):
+        q = Queue()
+        q.enqueue([starting_vertex])
+        visited = set()
+        
+        while q.size() > 0:
+            path = q.dequeue()
+            if path[-1] not in visited:
+                if path[-1] == destination_vertex:
+                    return path
+                visited.add(path[-1])
+                for next_vert in self.friendships[path[-1]]:
+                    new_path = path[:]
+                    new_path.append(next_vert)
+                    q.enqueue(new_path)
+
 
     def get_all_social_paths(self, user_id):
         """
@@ -57,8 +110,24 @@ class SocialGraph:
 
         The key is the friend's ID and the value is the path.
         """
-        visited = {}  # Note that this is a dictionary, not a set
-        # !!!! IMPLEMENT ME
+        
+        visited = {}
+        fof = []
+        visited[user_id] = [user_id]
+        for friend in self.friendships[user_id]:
+            visited[friend] = self.bfs(user_id, friend)
+            fof.append(friend)
+        while len(fof) != 0:
+            for friends in self.friendships[fof[0]]:
+                if friends not in fof:
+                    if friends not in visited:
+                        fof.append(friends)
+                if friends not in visited:
+                    visited[friends] = self.bfs(user_id, friends)
+                    if friends not in fof:
+                        fof.append(friends)
+                if len(fof) > 0:
+                    fof.pop(0)
         return visited
 
 
